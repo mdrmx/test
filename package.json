@@ -1,0 +1,22 @@
+{
+  "name": "geolocation_w_images",
+  "version": "1.0.0",
+  "description": "geolocation app based on Daniel Shiffman's working with APIs course",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [
+    "geolocation",
+    "test"
+  ],
+  "author": "stuart haffenden",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.18.2",
+    "nedb": "^1.8.0",
+    "node-fetch": "^2.7.0"
+  }
+}

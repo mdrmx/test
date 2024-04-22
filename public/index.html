@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geolocation App</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.2/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.2/addons/p5.dom.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.2/addons/p5.sound.min.js"></script>
+
+
+</head>
+
+<body>
+    <!-- html elements -->
+    <h1>Weather Geolocation App</h1>
+    <p>
+        <a href="/">Check-in</a> <a href="/all.html">Show Check-in Map</a>
+    </p>
+
+    <label for="fname">Name:</label>
+    <input type="text" id="fname">
+
+    <p>
+        latitude: <span id="lat"></span>º<br />
+        longitude: <span id="lon"></span>º
+    </p>
+    <p>
+        Conditions: <span id="conditions"></span><br /> Temp: <span id="temp"></span>ºC
+    </p>
+    <p>
+        AirQ Sensor: <span id="location"></span><br /> <span id="para"></span>: <span id="val"></span><span
+            id="unit"></span>
+    </p>
+    <button id="btn">submit</button><br /><br />
+    <!-- script -->
+    <script>
+        function setup() {
+            //setup video capture
+            noCanvas();
+            const video = createCapture(VIDEO);
+            video.size(130, 100);
+
+            //get client data
+            let lat, lon;
+            if ("geolocation" in navigator) {
+                console.log("location is available");
+                //call the getcurrentposition function on the navigator object
+                //this returns user's geolocation
+                navigator.geolocation.getCurrentPosition(async position => {
+                    lat = position.coords.latitude;
+                    lon = position.coords.longitude;
+
+                    //write data to spans
+                    document.getElementById('lat').textContent = lat;
+                    document.getElementById('lon').textContent = lon;
+
+                    //week10 add weather and airquality apis url
+                    const api_url = `weather/${lat},${lon}`;//request to make to weather endpoint by sending lat lon data
+                    const response = await fetch(api_url);
+                    const json = await response.json();
+                    console.log("Here is response from server-side API call: ",json);
+                    const weather = json.weather.currentConditions;//store returned weather data in variable
+                    const air = json.air.results[0];//store returned airquality data in variable
+
+                    //populate html elements with data
+                    document.getElementById('conditions').textContent = weather.conditions;
+                    document.getElementById('temp').textContent = weather.temp;
+                    document.getElementById('location').textContent = air.location;
+                    document.getElementById('para').textContent = air.measurements[0].parameter;
+                    document.getElementById('val').textContent = air.measurements[0].value;
+                    document.getElementById('unit').textContent = air.measurements[0].unit;
+
+                    //send data to the database
+                    const button = document.getElementById("btn");
+                    button.addEventListener('click', async event => {
+                        //load video pixels
+                        video.loadPixels();
+                        const image64 = video.canvas.toDataURL(); //convert image to base64 encoding
+                        
+                        const name = document.getElementById('fname').value; //get data from text input element
+                        const data = { name, lat, lon, weather, air, image64 };  //package all data into an object
+                        
+                        //create post request using fetch options
+                        const options = {
+                            method: 'POST',
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify(data)//convert to string
+                        };
+
+                        const response = await fetch("/api", options);//make post request
+                        const json = await response.json();//format server response to JSON
+                    })
+                });
+            } else {
+                //no location data available error message
+                console.log("location is NOT available");
+            }
+        }
+    </script>
+</body>
+
+</html>
